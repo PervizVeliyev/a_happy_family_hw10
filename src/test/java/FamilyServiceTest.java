@@ -144,5 +144,4 @@ class FamilyServiceTest {
 
         Assertions.assertEquals(new HashSet<>(Arrays.asList(dog, cat)), familyService.getPets(0));
     }
-
 }

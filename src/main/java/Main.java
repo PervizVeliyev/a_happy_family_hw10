@@ -37,5 +37,6 @@ public class Main {
 
         System.out.println(mother1);
         System.out.println(mother1.describeAge());
+        System.out.println(childAdopted.describeAge());
     }
 }

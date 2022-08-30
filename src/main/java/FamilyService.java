@@ -1,11 +1,9 @@
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import static java.time.LocalDate.now;
 
 public class FamilyService {
     private static FamilyDao familyDao = new CollectionFamilyDao();
@@ -15,35 +13,30 @@ public class FamilyService {
     }
 
     void displayAllFamilies(){
-        familyDao.getAllFamilies().forEach
-                (family -> System.out.printf("%d) %s\n",familyDao.getAllFamilies().indexOf(family), family));
+        familyDao.getAllFamilies()
+                .forEach(family -> System.out.printf("%d) %s\n",familyDao.getAllFamilies().indexOf(family), family));
     }
 
-    //I could display the information with starting index of 1 for database point of view.
-    //But, I didn't for indexing principe of Java language. So, I hope it won't be a problem seeing our data starting from 0 index.
-
     List<Family> getFamiliesBiggerThan(int number){
-        List<Family> helper = new ArrayList<>();
-        for(int i = 0; i< familyDao.getAllFamilies().size(); i++) {
-            if (familyDao.getFamilyByIndex(i).countFamily() > number) helper.add(familyDao.getFamilyByIndex(i));
-        }
-        return helper;
+        return familyDao.getAllFamilies()
+                .stream()
+                .filter(family -> family.countFamily() > number)
+                .collect(Collectors.toList());
     }
 
     List<Family> getFamiliesLessThan(int number){
-        List<Family> helper = new ArrayList<>();
-        for(int i = 0; i< familyDao.getAllFamilies().size(); i++) {
-            if (familyDao.getFamilyByIndex(i).countFamily() < number) helper.add(familyDao.getFamilyByIndex(i));
-        }
-        return helper;
+        return familyDao.getAllFamilies()
+                .stream()
+                .filter(family -> family.countFamily() < number)
+                .collect(Collectors.toList());
     }
 
     int countFamiliesWithMemberNumber(int number){
-        int count = 0;
-        for(int i = 0; i < familyDao.getAllFamilies().size();i++){
-            if(familyDao.getFamilyByIndex(i).countFamily() == number) count++;
-        }
-        return count;
+        return familyDao.getAllFamilies()
+                .stream()
+                .filter(family -> family.countFamily() == number)
+                .toList()
+                .size();
     }
 
     void createNewFamily(Human mother, Human father){
@@ -72,15 +65,13 @@ public class FamilyService {
     }
 
     void deleteAllChildrenOlderThan(int age){
-        for(int i = 0; i < familyDao.getAllFamilies().size(); i++){
-            Iterator<Human> iterator = familyDao.getFamilyByIndex(i).getChildren().iterator();
-            while(iterator.hasNext()){
-                Human element = iterator.next();
-                LocalDate localDate = Instant.ofEpochMilli(element.getBirthDate()).atZone(ZoneId.systemDefault()).toLocalDate().plusDays(1);
-                if(LocalDate.now().getYear() - localDate.getYear() > age) familyDao.getFamilyByIndex(i).deleteChild(element);
-            }
-            familyDao.saveFamily(familyDao.getFamilyByIndex(i));
-        }
+        familyDao.getAllFamilies()
+                .forEach(family -> family.getChildren()
+                        .forEach(child -> { if((now().getYear() - Instant.ofEpochMilli(child.getBirthDate())
+                                             .atZone(ZoneId.systemDefault()).
+                                             toLocalDate().getYear()) > age){
+                                             family.deleteChild(child);
+                                             familyDao.saveFamily(family);}}));
     }
 
     int count(){
